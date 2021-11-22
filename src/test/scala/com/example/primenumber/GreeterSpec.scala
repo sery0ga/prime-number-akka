@@ -30,15 +30,15 @@ class GreeterSpec
   val testKit = ActorTestKit(conf)
 
   val serverSystem: ActorSystem[_] = testKit.system
-  val bound = new GreeterServer(serverSystem).run()
+  val bound = new PrimeNumberServer(serverSystem).run()
 
   // make sure server is bound before using client
   bound.futureValue
 
-  implicit val clientSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "GreeterClient")
+  implicit val clientSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "PrimeNumberClient")
 
   val client =
-    GreeterServiceClient(GrpcClientSettings.fromConfig("primenumber.GreeterService"))
+    PrimeNumberServiceClient(GrpcClientSettings.fromConfig("primenumber.PrimeNumberService"))
 
   override def afterAll: Unit = {
     ActorTestKit.shutdown(clientSystem)
@@ -47,8 +47,8 @@ class GreeterSpec
 
   "GreeterService" should {
     "reply to single request" in {
-      val reply = client.sayHello(HelloRequest("Alice"))
-      reply.futureValue should ===(HelloReply("Hello, Alice"))
+      val reply = client.giveNumber(PrimeNumberRequest(1))
+      reply.futureValue should ===(PrimeNumberReply(1))
     }
   }
 }

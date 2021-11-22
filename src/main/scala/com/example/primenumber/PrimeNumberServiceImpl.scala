@@ -1,6 +1,7 @@
 package com.example.primenumber
 
 //#import
+
 import scala.concurrent.Future
 
 import akka.NotUsed
@@ -15,23 +16,23 @@ import akka.stream.scaladsl.Source
 
 //#service-request-reply
 //#service-stream
-class GreeterServiceImpl(system: ActorSystem[_]) extends GreeterService {
+class PrimeNumberServiceImpl(system: ActorSystem[_]) extends PrimeNumberService {
   private implicit val sys: ActorSystem[_] = system
 
   //#service-request-reply
-  val (inboundHub: Sink[HelloRequest, NotUsed], outboundHub: Source[HelloReply, NotUsed]) =
-    MergeHub.source[HelloRequest]
-    .map(request => HelloReply(s"Hello, ${request.name}"))
-      .toMat(BroadcastHub.sink[HelloReply])(Keep.both)
+  val (inboundHub: Sink[PrimeNumberRequest, NotUsed], outboundHub: Source[PrimeNumberReply, NotUsed]) =
+    MergeHub.source[PrimeNumberRequest]
+      .map(request => PrimeNumberReply(1))
+      .toMat(BroadcastHub.sink[PrimeNumberReply])(Keep.both)
       .run()
   //#service-request-reply
 
-  override def sayHello(request: HelloRequest): Future[HelloReply] = {
-    Future.successful(HelloReply(s"Hello, ${request.name}"))
+  override def giveNumber(request: PrimeNumberRequest): Future[PrimeNumberReply] = {
+    Future.successful(PrimeNumberReply(1))
   }
 
   //#service-request-reply
-  override def sayHelloToAll(in: Source[HelloRequest, NotUsed]): Source[HelloReply, NotUsed] = {
+  override def sayHelloToAll(in: Source[PrimeNumberRequest, NotUsed]): Source[PrimeNumberReply, NotUsed] = {
     in.runWith(inboundHub)
     outboundHub
   }

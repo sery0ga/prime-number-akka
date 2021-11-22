@@ -11,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration._
 
-class GreeterServiceImplSpec
+class PrimeNumberServiceImplSpec
   extends AnyWordSpec
   with BeforeAndAfterAll
   with Matchers
@@ -23,16 +23,16 @@ class GreeterServiceImplSpec
 
   implicit val system: ActorSystem[_] = testKit.system
 
-  val service = new GreeterServiceImpl(system)
+  val service = new PrimeNumberServiceImpl(system)
 
   override def afterAll(): Unit = {
     testKit.shutdownTestKit()
   }
 
-  "GreeterServiceImpl" should {
+  "PrimeNumberServiceImpl" should {
     "reply to single request" in {
-      val reply = service.sayHello(HelloRequest("Bob"))
-      reply.futureValue should ===(HelloReply("Hello, Bob"))
+      val reply = service.giveNumber(PrimeNumberRequest(1))
+      reply.futureValue should ===(PrimeNumberReply(1))
     }
   }
 }

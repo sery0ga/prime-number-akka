@@ -32,25 +32,25 @@ import scala.concurrent.duration._
 
 
 //#server
-object GreeterServer {
+object PrimeNumberServer {
 
   def main(args: Array[String]): Unit = {
     // important to enable HTTP/2 in ActorSystem's config
     val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
       .withFallback(ConfigFactory.defaultApplication())
-    val system = ActorSystem[Nothing](Behaviors.empty, "GreeterServer", conf)
-    new GreeterServer(system).run()
+    val system = ActorSystem[Nothing](Behaviors.empty, "PrimeNumberServer", conf)
+    new PrimeNumberServer(system).run()
   }
 }
 
-class GreeterServer(system: ActorSystem[_]) {
+class PrimeNumberServer(system: ActorSystem[_]) {
 
   def run(): Future[Http.ServerBinding] = {
     implicit val sys = system
     implicit val ec: ExecutionContext = system.executionContext
 
     val service: HttpRequest => Future[HttpResponse] =
-      GreeterServiceHandler(new GreeterServiceImpl(system))
+      PrimeNumberServiceHandler(new PrimeNumberServiceImpl(system))
 
     val bound: Future[Http.ServerBinding] = Http(system)
       .newServerAt(interface = "127.0.0.1", port = 8080)
@@ -73,11 +73,10 @@ class GreeterServer(system: ActorSystem[_]) {
 
 
   private def serverHttpContext: HttpsConnectionContext = {
-    val privateKey =
-      DERPrivateKeyLoader.load(PEMDecoder.decode(readPrivateKeyPem()))
+    val privateKey = DERPrivateKeyLoader.load(PEMDecoder.decode(readPrivateKeyPem()))
     val fact = CertificateFactory.getInstance("X.509")
     val cer = fact.generateCertificate(
-      classOf[GreeterServer].getResourceAsStream("/certs/server1.pem")
+      classOf[PrimeNumberServer].getResourceAsStream("/certs/server1.pem")
     )
     val ks = KeyStore.getInstance("PKCS12")
     ks.load(null)
@@ -91,7 +90,7 @@ class GreeterServer(system: ActorSystem[_]) {
     keyManagerFactory.init(ks, null)
     val context = SSLContext.getInstance("TLS")
     context.init(keyManagerFactory.getKeyManagers, null, new SecureRandom)
-    ConnectionContext.https(context)
+    ConnectionContext.httpsServer(context)
   }
 
   private def readPrivateKeyPem(): String =

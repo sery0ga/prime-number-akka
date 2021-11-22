@@ -15,13 +15,13 @@ import akka.stream.scaladsl.Source
 //#import
 
 //#client-request-reply
-object GreeterClient {
+object PrimeNumberClient {
 
   def main(args: Array[String]): Unit = {
-    implicit val sys: ActorSystem[_] = ActorSystem(Behaviors.empty, "GreeterClient")
+    implicit val sys: ActorSystem[_] = ActorSystem(Behaviors.empty, "PrimeNumberClient")
     implicit val ec: ExecutionContext = sys.executionContext
 
-    val client = GreeterServiceClient(GrpcClientSettings.fromConfig("primenumber.GreeterService"))
+    val client = PrimeNumberServiceClient(GrpcClientSettings.fromConfig("primenumber.PrimeNumberService"))
 
     val names =
       if (args.isEmpty) List("Alice", "Bob")
@@ -36,7 +36,7 @@ object GreeterClient {
 
     def singleRequestReply(name: String): Unit = {
       println(s"Performing request: $name")
-      val reply = client.sayHello(HelloRequest(name))
+      val reply = client.giveNumber(PrimeNumberRequest(1))
       reply.onComplete {
         case Success(msg) =>
           println(msg)
@@ -50,17 +50,17 @@ object GreeterClient {
     def streamingBroadcast(name: String): Unit = {
       println(s"Performing streaming requests: $name")
 
-      val requestStream: Source[HelloRequest, NotUsed] =
+      val requestStream: Source[PrimeNumberRequest, NotUsed] =
         Source
           .tick(1.second, 1.second, "tick")
           .zipWithIndex
           .map { case (_, i) => i }
-          .map(i => HelloRequest(s"$name-$i"))
+          .map(i => PrimeNumberRequest(i.toInt))
           .mapMaterializedValue(_ => NotUsed)
 
-      val responseStream: Source[HelloReply, NotUsed] = client.sayHelloToAll(requestStream)
+      val responseStream: Source[PrimeNumberReply, NotUsed] = client.sayHelloToAll(requestStream)
       val done: Future[Done] =
-        responseStream.runForeach(reply => println(s"$name got streaming reply: ${reply.message}"))
+        responseStream.runForeach(reply => println(s"$name got streaming reply: ${reply.number}"))
 
       done.onComplete {
         case Success(_) =>
