@@ -13,7 +13,6 @@ import scala.util.{Failure, Success}
 object PrimeNumberServer {
 
   def main(args: Array[String]): Unit = {
-    // important to enable HTTP/2 in ActorSystem's config
     val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
       .withFallback(ConfigFactory.defaultApplication())
     val system = ActorSystem[Nothing](Behaviors.empty, "PrimeNumberServer", conf)

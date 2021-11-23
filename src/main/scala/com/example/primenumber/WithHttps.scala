@@ -9,6 +9,9 @@ import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{KeyManagerFactory, SSLContext}
 import scala.io.Source
 
+/**
+ * Adds support for HTTPS to services
+ */
 trait WithHttps {
 
   protected def serverHttpContext(config: Config, pemLocation: String, keyLocation: String): HttpsConnectionContext = {

@@ -18,7 +18,7 @@ message PrimeNumberRequest {
   string requestId = 2;
 }
 
-// The response message containing the greetings
+// The response message containing a prime number
 message PrimeNumberReply {
   int32 number = 1;
 }
