@@ -35,6 +35,6 @@ trait WithHttps {
     ConnectionContext.httpsServer(context)
   }
 
-  protected  def readPrivateKeyPem(config: Config, keyLocation: String): String =
+  protected def readPrivateKeyPem(config: Config, keyLocation: String): String =
     Source.fromResource(config.getString(keyLocation)).mkString
 }
