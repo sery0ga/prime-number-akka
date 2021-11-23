@@ -2,23 +2,14 @@ package com.example.primenumber
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import akka.event.slf4j.Logger
-import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.pki.pem.{DERPrivateKeyLoader, PEMDecoder}
+import akka.http.scaladsl.Http
 import com.typesafe.config.ConfigFactory
+import org.slf4j.Logger
 
-import java.security.{KeyStore, SecureRandom}
-import java.security.cert.{Certificate, CertificateFactory}
-import javax.net.ssl.{KeyManagerFactory, SSLContext}
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.io.Source
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-//#import
 
-
-//#server
 object PrimeNumberServer {
 
   def main(args: Array[String]): Unit = {
@@ -26,63 +17,44 @@ object PrimeNumberServer {
     val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
       .withFallback(ConfigFactory.defaultApplication())
     val system = ActorSystem[Nothing](Behaviors.empty, "PrimeNumberServer", conf)
-    new PrimeNumberServer(system).run()
+    new PrimeNumberServer(system, akka.event.slf4j.Logger.root).run()
   }
 }
 
-class PrimeNumberServer(system: ActorSystem[_]) {
+/**
+ * A prime number server serves one purpose: stream a list of prime numbers up to the given limit. The list is empty
+ * if the limit is less than 2. Otherwise it's not :)
+ */
+class PrimeNumberServer(system: ActorSystem[_], logger: Logger) extends WithHttps {
 
   def run(): Future[Http.ServerBinding] = {
     implicit val sys = system
     implicit val ec: ExecutionContext = system.executionContext
 
-    val service: HttpRequest => Future[HttpResponse] =
-      PrimeNumberServiceHandler(new PrimeNumberServiceImpl(Logger.root))
+    val service = PrimeNumberServiceHandler(new PrimeNumberServiceImpl(logger))
 
-    val bound: Future[Http.ServerBinding] = Http(system)
-      .newServerAt(interface = "127.0.0.1", port = 8080)
-      .enableHttps(serverHttpContext)
+    val (host, port) = (
+      system.settings.config.getString("server.host"),
+      system.settings.config.getInt("server.port")
+    )
+
+    val bound = Http(system)
+      .newServerAt(interface = host, port = port)
+      .enableHttps(serverHttpContext(system.settings.config,
+        "server.tls.cert-chain",
+        "server.tls.private-key"))
       .bind(service)
       .map(_.addToCoordinatedShutdown(hardTerminationDeadline = 10.seconds))
 
     bound.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
-        println("gRPC server bound to {}:{}", address.getHostString, address.getPort)
+        logger.info(s"gPRC server bound to ${address.getHostString}:${address.getPort}")
       case Failure(ex) =>
-        println("Failed to bind gRPC endpoint, terminating system", ex)
+        logger.error(s"gRPC server could not bind to $host:$port", ex)
         system.terminate()
     }
 
     bound
   }
-  //#server
-
-
-  private def serverHttpContext: HttpsConnectionContext = {
-    val privateKey = DERPrivateKeyLoader.load(PEMDecoder.decode(readPrivateKeyPem()))
-    val fact = CertificateFactory.getInstance("X.509")
-    val cer = fact.generateCertificate(
-      classOf[PrimeNumberServer].getResourceAsStream("/certs/server1.pem")
-    )
-    val ks = KeyStore.getInstance("PKCS12")
-    ks.load(null)
-    ks.setKeyEntry(
-      "private",
-      privateKey,
-      new Array[Char](0),
-      Array[Certificate](cer)
-    )
-    val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
-    keyManagerFactory.init(ks, null)
-    val context = SSLContext.getInstance("TLS")
-    context.init(keyManagerFactory.getKeyManagers, null, new SecureRandom)
-    ConnectionContext.httpsServer(context)
-  }
-
-  private def readPrivateKeyPem(): String =
-    Source.fromResource("certs/server1.key").mkString
-  //#server
-
 }
-//#server

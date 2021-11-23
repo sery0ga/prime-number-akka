@@ -30,7 +30,7 @@ class GreeterSpec
   val testKit = ActorTestKit(conf)
 
   val serverSystem: ActorSystem[_] = testKit.system
-  val bound = new PrimeNumberServer(serverSystem).run()
+  val bound = new PrimeNumberServer(serverSystem, serverSystem.log).run()
 
   // make sure server is bound before using client
   bound.futureValue

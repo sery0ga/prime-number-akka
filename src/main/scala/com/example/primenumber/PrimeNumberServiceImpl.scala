@@ -18,6 +18,12 @@ class PrimeNumberServiceImpl(logger: Logger) extends PrimeNumberService {
    */
   override def giveNumbers(request: PrimeNumberRequest): Source[PrimeNumberReply, NotUsed] = {
     logger.info(s"[request id=${request.requestId}] producing the list of prime numbers up to ${request.number}")
-    Source(PrimeNumberCalculator.calculate(request.number).map(PrimeNumberReply(_)))
+    val numbers = PrimeNumberCalculator.calculate(request.number)
+    numbers match {
+      case Left(msg) =>
+        logger.error(s"[request id=${request.requestId}] caused the error `$msg`")
+        Source.failed(new RuntimeException(msg))
+      case Right(numbers) => numbers.map(PrimeNumberReply(_))
+    }
   }
 }

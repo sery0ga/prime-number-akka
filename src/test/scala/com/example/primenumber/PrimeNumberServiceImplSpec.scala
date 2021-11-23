@@ -33,5 +33,9 @@ class PrimeNumberServiceImplSpec
       val reply = new PrimeNumberServiceImpl(Logger.root).giveNumbers(PrimeNumberRequest(1314)).take(5).runWith(Sink.seq)
       reply.futureValue.map(_.number) shouldBe Vector(2, 3, 5, 7, 11)
     }
+    "reply with an error" in {
+      val reply = new PrimeNumberServiceImpl(Logger.root).giveNumbers(PrimeNumberRequest(Int.MaxValue)).runWith(Sink.seq)
+      reply.failed.futureValue shouldBe a[RuntimeException]
+    }
   }
 }
