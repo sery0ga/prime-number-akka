@@ -15,6 +15,6 @@ class PrimeNumberCalculatorSpec extends AnyWordSpec with Matchers {
     PrimeNumberCalculator.calculate(10) shouldBe List(2, 3, 5, 7)
   }
   "For the number 17 should return the list of prime numbers [2, 3, 5, 7, 11, 13, 17]" in {
-    PrimeNumberCalculator.calculate(10) shouldBe List(2, 3, 5, 7, 11, 13, 17)
+    PrimeNumberCalculator.calculate(17) shouldBe List(2, 3, 5, 7, 11, 13, 17)
   }
 }

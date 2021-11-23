@@ -1,31 +1,24 @@
-//#service-request-reply
 syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "com.example.primenumber";
 option java_outer_classname = "PrimeNumberProto";
 
-// The greeting service definition.
+// The definition of the PrimeNumber service
 service PrimeNumberService {
-  // Sends a greeting
-  rpc GiveNumber (PrimeNumberRequest) returns (PrimeNumberReply) {}
-  //#service-request-reply
-  //#service-stream
-  // The stream of incoming HelloRequest messages are
-  // sent out as corresponding HelloReply. From
-  // all clients to all clients, like a chat room.
-  rpc SayHelloToAll (stream PrimeNumberRequest) returns (stream PrimeNumberReply) {}
-  //#service-stream
-  //#service-request-reply
+  rpc GiveNumbers (PrimeNumberRequest) returns (stream PrimeNumberReply) {}
 }
 
-// The request message containing the user's name.
+// The request message containing the limit for the prime numbers to be generated
 message PrimeNumberRequest {
+  // the number defining the limit for the prime numbers
   int32 number = 1;
+
+  // the id of the request to track the flow through all services
+  string requestId = 2;
 }
 
 // The response message containing the greetings
 message PrimeNumberReply {
   int32 number = 1;
 }
-//#service-request-reply

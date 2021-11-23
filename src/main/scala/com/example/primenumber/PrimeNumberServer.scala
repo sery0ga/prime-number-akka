@@ -1,33 +1,20 @@
 package com.example.primenumber
 
-//#import
-
-
-import java.security.KeyStore
-import java.security.SecureRandom
-import java.security.cert.Certificate
-import java.security.cert.CertificateFactory
-
-import scala.io.Source
-
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.ConnectionContext
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.HttpsConnectionContext
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpResponse
-import akka.pki.pem.DERPrivateKeyLoader
-import akka.pki.pem.PEMDecoder
+import akka.event.slf4j.Logger
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.pki.pem.{DERPrivateKeyLoader, PEMDecoder}
 import com.typesafe.config.ConfigFactory
-import javax.net.ssl.KeyManagerFactory
-import javax.net.ssl.SSLContext
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
+import java.security.{KeyStore, SecureRandom}
+import java.security.cert.{Certificate, CertificateFactory}
+import javax.net.ssl.{KeyManagerFactory, SSLContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.io.Source
+import scala.util.{Failure, Success}
 //#import
 
 
@@ -50,7 +37,7 @@ class PrimeNumberServer(system: ActorSystem[_]) {
     implicit val ec: ExecutionContext = system.executionContext
 
     val service: HttpRequest => Future[HttpResponse] =
-      PrimeNumberServiceHandler(new PrimeNumberServiceImpl(system))
+      PrimeNumberServiceHandler(new PrimeNumberServiceImpl(Logger.root))
 
     val bound: Future[Http.ServerBinding] = Http(system)
       .newServerAt(interface = "127.0.0.1", port = 8080)

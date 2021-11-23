@@ -1,9 +1,9 @@
-//#full-example
 package com.example.primenumber
 
-import akka.actor.testkit.typed.scaladsl.ActorTestKit
+import akka.actor.testkit.typed.scaladsl.{ActorTestKit, LogCapturing}
 import akka.actor.typed.ActorSystem
-
+import akka.event.slf4j.Logger
+import akka.stream.scaladsl.Sink
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +15,8 @@ class PrimeNumberServiceImplSpec
   extends AnyWordSpec
   with BeforeAndAfterAll
   with Matchers
-  with ScalaFutures {
+  with ScalaFutures
+  with LogCapturing {
 
   val testKit = ActorTestKit()
 
@@ -23,17 +24,14 @@ class PrimeNumberServiceImplSpec
 
   implicit val system: ActorSystem[_] = testKit.system
 
-  val service = new PrimeNumberServiceImpl(system)
-
   override def afterAll(): Unit = {
     testKit.shutdownTestKit()
   }
 
-  "PrimeNumberServiceImpl" should {
+  "PriceNumberServiceImpl" should {
     "reply to single request" in {
-      val reply = service.giveNumber(PrimeNumberRequest(1))
-      reply.futureValue should ===(PrimeNumberReply(1))
+      val reply = new PrimeNumberServiceImpl(Logger.root).giveNumbers(PrimeNumberRequest(1314)).take(5).runWith(Sink.seq)
+      reply.futureValue.map(_.number) shouldBe Vector(2, 3, 5, 7, 11)
     }
   }
 }
-//#full-example

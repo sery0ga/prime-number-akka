@@ -1,16 +1,15 @@
 package com.example.primenumber
 
 //#import
-import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Failure
-import scala.util.Success
-import akka.Done
-import akka.NotUsed
+
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.grpc.GrpcClientSettings
 import akka.stream.scaladsl.Source
+import akka.{Done, NotUsed}
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 //#import
 
@@ -23,44 +22,15 @@ object PrimeNumberClient {
 
     val client = PrimeNumberServiceClient(GrpcClientSettings.fromConfig("primenumber.PrimeNumberService"))
 
-    val names =
-      if (args.isEmpty) List("Alice", "Bob")
-      else args.toList
+    val names = if (args.isEmpty) List("Alice", "Bob") else args.toList
 
     names.foreach(singleRequestReply)
 
-    //#client-request-reply
-    if (args.nonEmpty)
-      names.foreach(streamingBroadcast)
-    //#client-request-reply
-
     def singleRequestReply(name: String): Unit = {
-      println(s"Performing request: $name")
-      val reply = client.giveNumber(PrimeNumberRequest(1))
-      reply.onComplete {
-        case Success(msg) =>
-          println(msg)
-        case Failure(e) =>
-          println(s"Error: $e")
-      }
-    }
-
-    //#client-request-reply
-    //#client-stream
-    def streamingBroadcast(name: String): Unit = {
-      println(s"Performing streaming requests: $name")
-
-      val requestStream: Source[PrimeNumberRequest, NotUsed] =
-        Source
-          .tick(1.second, 1.second, "tick")
-          .zipWithIndex
-          .map { case (_, i) => i }
-          .map(i => PrimeNumberRequest(i.toInt))
-          .mapMaterializedValue(_ => NotUsed)
-
-      val responseStream: Source[PrimeNumberReply, NotUsed] = client.sayHelloToAll(requestStream)
-      val done: Future[Done] =
+      val responseStream: Source[PrimeNumberReply, NotUsed] = client.giveNumbers(PrimeNumberRequest(13))
+      val done: Future[Done] = {
         responseStream.runForeach(reply => println(s"$name got streaming reply: ${reply.number}"))
+      }
 
       done.onComplete {
         case Success(_) =>
@@ -69,8 +39,6 @@ object PrimeNumberClient {
           println(s"Error streamingBroadcast: $e")
       }
     }
-    //#client-stream
-    //#client-request-reply
 
   }
 
